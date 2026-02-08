@@ -1,0 +1,235 @@
+{
+  "n_experiments": 16,
+  "tasks": [
+    "sst2"
+  ],
+  "correlations": [
+    {
+      "probe": "gradient_norm",
+      "outcome": "val_accuracy",
+      "correlation": 0.12094447901054688,
+      "p_value": 0.6554679401036361,
+      "significant": false,
+      "n_samples": 16
+    },
+    {
+      "probe": "gradient_norm",
+      "outcome": "lr",
+      "correlation": 0.10914103126634984,
+      "p_value": 0.68742159692492,
+      "significant": false,
+      "n_samples": 16
+    },
+    {
+      "probe": "gradient_variance",
+      "outcome": "val_accuracy",
+      "correlation": -0.030973586088066878,
+      "p_value": 0.9093403634373243,
+      "significant": false,
+      "n_samples": 16
+    },
+    {
+      "probe": "gradient_variance",
+      "outcome": "lr",
+      "correlation": 0.24253562503633297,
+      "p_value": 0.36543033859146357,
+      "significant": false,
+      "n_samples": 16
+    },
+    {
+      "probe": "sam_sharpness",
+      "outcome": "val_accuracy",
+      "correlation": 0.35988357168991997,
+      "p_value": 0.1709477876278666,
+      "significant": false,
+      "n_samples": 16
+    },
+    {
+      "probe": "sam_sharpness",
+      "outcome": "lr",
+      "correlation": -0.13339459376998314,
+      "p_value": 0.6223613103128188,
+      "significant": false,
+      "n_samples": 16
+    },
+    {
+      "probe": "hutchinson_trace",
+      "outcome": "val_accuracy",
+      "correlation": -0.05752237416355278,
+      "p_value": 0.8324197118219859,
+      "significant": false,
+      "n_samples": 16
+    },
+    {
+      "probe": "hutchinson_trace",
+      "outcome": "lr",
+      "correlation": 0.18190171877724975,
+      "p_value": 0.5001556582030131,
+      "significant": false,
+      "n_samples": 16
+    },
+    {
+      "probe": "top_eigenvalue",
+      "outcome": "val_accuracy",
+      "correlation": -0.04719784546753049,
+      "p_value": 0.8622013996465866,
+      "significant": false,
+      "n_samples": 16
+    },
+    {
+      "probe": "top_eigenvalue",
+      "outcome": "lr",
+      "correlation": -0.2789159687917829,
+      "p_value": 0.2955112361589248,
+      "significant": false,
+      "n_samples": 16
+    },
+    {
+      "probe": "loss_at_init",
+      "outcome": "val_accuracy",
+      "correlation": 0.4970523100799304,
+      "p_value": 0.050137038082134155,
+      "significant": false,
+      "n_samples": 16
+    },
+    {
+      "probe": "loss_at_init",
+      "outcome": "lr",
+      "correlation": -0.01212678125181665,
+      "p_value": 0.9644472503316937,
+      "significant": false,
+      "n_samples": 16
+    }
+  ],
+  "partial_correlations": [
+    {
+      "probe": "gradient_norm",
+      "target": "val_accuracy",
+      "partial_correlation": -0.3588235294117647,
+      "p_value": 0.17230386289263244,
+      "controlled_for": [
+        "gradient_variance",
+        "sam_sharpness",
+        "hutchinson_trace",
+        "top_eigenvalue"
+      ]
+    },
+    {
+      "probe": "gradient_variance",
+      "target": "val_accuracy",
+      "partial_correlation": 0.27058823529411763,
+      "p_value": 0.31076062710233504,
+      "controlled_for": [
+        "gradient_norm",
+        "sam_sharpness",
+        "hutchinson_trace",
+        "top_eigenvalue"
+      ]
+    },
+    {
+      "probe": "sam_sharpness",
+      "target": "val_accuracy",
+      "partial_correlation": 0.4823529411764706,
+      "p_value": 0.058458976774719576,
+      "controlled_for": [
+        "gradient_norm",
+        "gradient_variance",
+        "hutchinson_trace",
+        "top_eigenvalue"
+      ]
+    },
+    {
+      "probe": "hutchinson_trace",
+      "target": "val_accuracy",
+      "partial_correlation": -0.07058823529411765,
+      "p_value": 0.795039302337628,
+      "controlled_for": [
+        "gradient_norm",
+        "gradient_variance",
+        "sam_sharpness",
+        "top_eigenvalue"
+      ]
+    },
+    {
+      "probe": "top_eigenvalue",
+      "target": "val_accuracy",
+      "partial_correlation": -0.4382352941176471,
+      "p_value": 0.08953003199187995,
+      "controlled_for": [
+        "gradient_norm",
+        "gradient_variance",
+        "sam_sharpness",
+        "hutchinson_trace"
+      ]
+    }
+  ],
+  "optimal_lr_by_probe": {
+    "hutchinson_trace": {
+      "low": {
+        "optimal_lr": 2e-05,
+        "best_accuracy": 0.8440366972477065,
+        "mean_probe_value": -316.4831083679199,
+        "n_samples": 5
+      },
+      "high": {
+        "optimal_lr": 5e-05,
+        "best_accuracy": 0.8451834862385321,
+        "mean_probe_value": 763.8483750661213,
+        "n_samples": 6
+      },
+      "medium": {
+        "optimal_lr": 2e-05,
+        "best_accuracy": 0.8532110091743119,
+        "mean_probe_value": 238.7104708862305,
+        "n_samples": 5
+      }
+    },
+    "sam_sharpness": {
+      "low": {
+        "optimal_lr": 5e-05,
+        "best_accuracy": 0.8451834862385321,
+        "mean_probe_value": 0.43596728642781574,
+        "n_samples": 6
+      },
+      "medium": {
+        "optimal_lr": 2e-05,
+        "best_accuracy": 0.8532110091743119,
+        "mean_probe_value": 0.44564228057861327,
+        "n_samples": 5
+      },
+      "high": {
+        "optimal_lr": 5e-05,
+        "best_accuracy": 0.8451834862385321,
+        "mean_probe_value": 0.4777227401733398,
+        "n_samples": 5
+      }
+    },
+    "gradient_norm": {
+      "medium": {
+        "optimal_lr": 5e-05,
+        "best_accuracy": 0.8451834862385321,
+        "mean_probe_value": 9.265318489074707,
+        "n_samples": 5
+      },
+      "low": {
+        "optimal_lr": 2e-05,
+        "best_accuracy": 0.8532110091743119,
+        "mean_probe_value": 8.978029950459797,
+        "n_samples": 6
+      },
+      "high": {
+        "optimal_lr": 5e-05,
+        "best_accuracy": 0.8428899082568807,
+        "mean_probe_value": 9.73758014678955,
+        "n_samples": 5
+      }
+    }
+  },
+  "predictive_power": [],
+  "summary": {
+    "signal_strength": "MODERATE",
+    "max_correlation": 0.4970523100799304,
+    "n_significant": 0,
+    "recommendation": "Investigate further, consider different probes or timing"
+  }
+}
