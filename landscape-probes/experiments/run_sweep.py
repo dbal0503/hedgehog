@@ -267,7 +267,7 @@ def run_sweep(
                 print("  Computing probes at initialization...")
                 prober = LandscapeProbes(model, criterion, device)
                 try:
-                    probes = prober.compute_all_probes(train_loader, n_batches=5)
+                    probes = prober.compute_all_probes(train_loader, n_batches=5, n_hutchinson_samples=50)
                     print(f"  Probes: grad_norm={probes['gradient_norm']:.4f}, "
                           f"sam_sharpness={probes['sam_sharpness']:.4f}, "
                           f"trace={probes['hutchinson_trace']:.4f}")
@@ -320,7 +320,7 @@ def run_sweep(
 
                 # Save incrementally (for crash recovery)
                 os.makedirs(output_dir, exist_ok=True)
-                output_path = f"{output_dir}/{task_name}_results.json"
+                output_path = f"{output_dir}/{task_name}_seed{seed}_results.json"
                 with open(output_path, "w") as f:
                     json.dump(results, f, indent=2)
                 print(f"  Results saved to {output_path}")
