@@ -88,14 +88,27 @@ def train_one_config(
     weight_decay: float,
     num_epochs: int = 3,
     device: str = "cuda",
-    max_grad_norm: float = 1.0
-) -> Dict[str, float]:
+    max_grad_norm: float = 1.0,
+    probe_steps: Optional[List[int]] = None,
+    prober: Optional[LandscapeProbes] = None,
+    probe_loader: Optional[DataLoader] = None,
+    n_probe_batches: int = 5,
+    n_hutchinson_samples: int = 50,
+) -> Dict[str, Any]:
     """
     Train model with given hyperparameters.
+
+    Args:
+        probe_steps: If set, measure probes after each of these training steps.
+        prober: LandscapeProbes instance (must share the same model).
+        probe_loader: DataLoader for probe measurement (defaults to train_loader).
+        n_probe_batches: Number of batches for probe computation.
+        n_hutchinson_samples: Number of Hutchinson samples for trace estimation.
 
     Returns dict with:
         - val_accuracy: final validation accuracy
         - final_train_loss: training loss at end
+        - probes_by_step: (optional) dict mapping step number -> probe dict
     """
     optimizer = AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
 
@@ -107,6 +120,10 @@ def train_one_config(
 
     criterion = torch.nn.CrossEntropyLoss()
     model.train()
+
+    probes_by_step = {}
+    remaining_probe_steps = sorted(probe_steps) if probe_steps else []
+    global_step = 0
 
     final_train_loss = 0.0
     for epoch in range(num_epochs):
@@ -131,9 +148,33 @@ def train_one_config(
 
             epoch_loss += loss.item()
             num_batches += 1
-            pbar.set_postfix({'loss': loss.item()})
+            global_step += 1
+            pbar.set_postfix({'loss': loss.item(), 'step': global_step})
+
+            # Measure probes at specified training steps
+            if (remaining_probe_steps and prober is not None
+                    and global_step == remaining_probe_steps[0]):
+                step = remaining_probe_steps.pop(0)
+                print(f"  Measuring probes at step {step}...")
+                model.eval()
+                try:
+                    loader = probe_loader if probe_loader is not None else train_loader
+                    probes_by_step[step] = prober.compute_all_probes(
+                        loader, n_batches=n_probe_batches,
+                        n_hutchinson_samples=n_hutchinson_samples
+                    )
+                except Exception as e:
+                    print(f"  Warning: Probe computation at step {step} failed: {e}")
+                    probes_by_step[step] = {k: np.nan for k in [
+                        'gradient_norm', 'gradient_variance', 'sam_sharpness',
+                        'hutchinson_trace', 'top_eigenvalue', 'loss_at_init'
+                    ]}
+                model.train()
 
         final_train_loss = epoch_loss / num_batches
+
+    if remaining_probe_steps:
+        print(f"  Warning: steps {remaining_probe_steps} exceed total steps ({global_step}), skipped")
 
     # Evaluate
     model.eval()
@@ -148,10 +189,13 @@ def train_one_config(
             correct += (preds == labels).sum().item()
             total += labels.size(0)
 
-    return {
+    result = {
         'val_accuracy': correct / total,
         'final_train_loss': final_train_loss
     }
+    if probes_by_step:
+        result['probes_by_step'] = probes_by_step
+    return result
 
 
 def run_sweep(
@@ -166,7 +210,8 @@ def run_sweep(
     weight_decays: Optional[List[float]] = None,
     use_wandb: bool = False,
     seed: int = 42,
-    resume_from: Optional[str] = None
+    resume_from: Optional[str] = None,
+    probe_steps: Optional[List[int]] = None
 ) -> List[Dict[str, Any]]:
     """
     Run full hyperparameter sweep with probe measurements.
@@ -184,6 +229,8 @@ def run_sweep(
         use_wandb: Whether to log to wandb
         seed: Random seed for reproducibility
         resume_from: Path to existing results file to resume from
+        probe_steps: If set, measure probes after each of these training steps.
+            Results are saved to a separate file from the init-only results.
 
     Returns:
         List of result dictionaries
@@ -267,13 +314,13 @@ def run_sweep(
                 print("  Computing probes at initialization...")
                 prober = LandscapeProbes(model, criterion, device)
                 try:
-                    probes = prober.compute_all_probes(train_loader, n_batches=5, n_hutchinson_samples=50)
-                    print(f"  Probes: grad_norm={probes['gradient_norm']:.4f}, "
-                          f"sam_sharpness={probes['sam_sharpness']:.4f}, "
-                          f"trace={probes['hutchinson_trace']:.4f}")
+                    init_probes = prober.compute_all_probes(train_loader, n_batches=5, n_hutchinson_samples=50)
+                    print(f"  Probes: grad_norm={init_probes['gradient_norm']:.4f}, "
+                          f"sam_sharpness={init_probes['sam_sharpness']:.4f}, "
+                          f"trace={init_probes['hutchinson_trace']:.4f}")
                 except Exception as e:
                     print(f"  Warning: Probe computation failed: {e}")
-                    probes = {
+                    init_probes = {
                         'gradient_norm': np.nan,
                         'gradient_variance': np.nan,
                         'sam_sharpness': np.nan,
@@ -282,21 +329,30 @@ def run_sweep(
                         'loss_at_init': np.nan
                     }
 
-                # Train
+                # Train (with optional multi-step probe measurement)
                 print("  Training...")
                 try:
                     train_results = train_one_config(
                         model, train_loader, val_loader,
                         lr=lr, warmup_ratio=warmup, weight_decay=wd,
-                        num_epochs=num_epochs, device=device
+                        num_epochs=num_epochs, device=device,
+                        probe_steps=probe_steps, prober=prober,
+                        probe_loader=train_loader,
                     )
                     val_acc = train_results['val_accuracy']
                     final_loss = train_results['final_train_loss']
+                    probes_by_step = train_results.get('probes_by_step', {})
                     print(f"  Validation accuracy: {val_acc:.4f}")
+                    for step, step_probes in sorted(probes_by_step.items()):
+                        print(f"  Probes @ step {step}: "
+                              f"grad_norm={step_probes['gradient_norm']:.4f}, "
+                              f"sam_sharpness={step_probes['sam_sharpness']:.4f}, "
+                              f"trace={step_probes['hutchinson_trace']:.4f}")
                 except Exception as e:
                     print(f"  Training failed: {e}")
                     val_acc = np.nan
                     final_loss = np.nan
+                    probes_by_step = {}
 
                 # Clear GPU memory
                 del model
@@ -314,13 +370,30 @@ def run_sweep(
                     "val_accuracy": val_acc,
                     "final_train_loss": final_loss,
                     "seed": seed,
-                    **probes
                 }
+
+                if probe_steps is not None:
+                    result["probe_steps"] = sorted(probe_steps)
+                    # Prefix init probes with "init_"
+                    for k, v in init_probes.items():
+                        result[f"init_{k}"] = v
+                    # Add probes at each step with "step{N}_" prefix
+                    for step in sorted(probe_steps):
+                        step_probes = probes_by_step.get(step, {})
+                        for k in init_probes:
+                            result[f"step{step}_{k}"] = step_probes.get(k, np.nan)
+                else:
+                    # Backward compatible: no prefix
+                    result.update(init_probes)
+
                 results.append(result)
 
                 # Save incrementally (for crash recovery)
                 os.makedirs(output_dir, exist_ok=True)
-                output_path = f"{output_dir}/{task_name}_seed{seed}_results.json"
+                if probe_steps is not None:
+                    output_path = f"{output_dir}/{task_name}_seed{seed}_multistep_results.json"
+                else:
+                    output_path = f"{output_dir}/{task_name}_seed{seed}_results.json"
                 with open(output_path, "w") as f:
                     json.dump(results, f, indent=2)
                 print(f"  Results saved to {output_path}")
@@ -459,6 +532,8 @@ def main():
                         help="Run sanity check instead of full sweep")
     parser.add_argument("--resume", type=str, default=None,
                         help="Path to results file to resume from")
+    parser.add_argument("--probe-steps", type=str, default=None,
+                        help="Comma-separated list of training steps at which to measure probes (e.g. 10,25,50,100,200,400)")
 
     args = parser.parse_args()
 
@@ -489,7 +564,8 @@ def main():
             device=args.device,
             use_wandb=args.use_wandb,
             seed=args.seed,
-            resume_from=args.resume
+            resume_from=args.resume,
+            probe_steps=[int(s) for s in args.probe_steps.split(",")] if args.probe_steps else None
         )
 
 
