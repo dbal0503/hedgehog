@@ -169,7 +169,7 @@ def load_finetune_data(tokenizer, task_name: str = "sst2", max_length: int = 128
     tokenized = tokenized.rename_column("label", "labels")
     tokenized.set_format("torch", columns=["input_ids", "attention_mask", "labels"])
 
-    num_labels = len(set(tokenized["train"]["labels"].numpy()))
+    num_labels = len(set(tokenized["train"]["labels"]))
 
     train_loader = DataLoader(
         tokenized["train"], batch_size=batch_size, shuffle=True, num_workers=0,
