@@ -1,0 +1,20 @@
+\contentsline {section}{\numberline {1}The Question}{3}{section.1}%
+\contentsline {section}{\numberline {2}What We Measured}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Gradient-Based Probes}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Curvature-Based Probes}{3}{subsection.2.2}%
+\contentsline {section}{\numberline {3}The Experimental Setup}{4}{section.3}%
+\contentsline {section}{\numberline {4}Act\nobreakspace {}I: The Null Result}{4}{section.4}%
+\contentsline {section}{\numberline {5}Act\nobreakspace {}II: The Pivot}{5}{section.5}%
+\contentsline {section}{\numberline {6}The Results}{6}{section.6}%
+\contentsline {subsection}{\numberline {6.1}The Full Correlation Table}{6}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Two Temporal Phases}{6}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}The Strongest Predictors}{7}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}Accuracy Distribution}{7}{subsection.6.4}%
+\contentsline {section}{\numberline {7}The Heatmap}{8}{section.7}%
+\contentsline {section}{\numberline {8}What This Means}{8}{section.8}%
+\contentsline {subsection}{\numberline {8.1}The Landscape Is Not Destiny}{8}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}The Optimizer--Geometry Interaction}{8}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}Connection to Edge of Stability}{8}{subsection.8.3}%
+\contentsline {section}{\numberline {9}Limitations and Honest Assessment}{9}{section.9}%
+\contentsline {section}{\numberline {10}Where This Goes}{9}{section.10}%
+\contentsline {section}{\numberline {11}Conclusion}{9}{section.11}%

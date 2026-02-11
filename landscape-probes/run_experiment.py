@@ -28,7 +28,7 @@ import torch
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from experiments.run_sweep import run_sweep, run_sanity_check
-from analysis.correlation_analysis import generate_full_report
+from analysis.correlation_analysis import generate_full_report, generate_multistep_report
 
 
 def check_environment():
@@ -225,6 +225,30 @@ def main():
     full_parser.add_argument("--resume", action="store_true",
                              help="Resume from existing results")
 
+    # Pretrain probe experiment
+    pretrain_parser = subparsers.add_parser("pretrain", parents=[common],
+                                             help="Run pretrain checkpoint probe experiment")
+    pretrain_parser.add_argument("--steps", nargs="+",
+                                 default=["step_200k", "step_600k", "step_1000k", "step_2000k"],
+                                 help="MultiBERTs checkpoint steps")
+    pretrain_parser.add_argument("--seeds", nargs="+", type=int, default=[0, 1, 2, 3, 4],
+                                 help="MultiBERTs seeds")
+    pretrain_parser.add_argument("--task", type=str, default="sst2",
+                                 help="Fine-tuning task")
+    pretrain_parser.add_argument("--epochs", type=int, default=1,
+                                 help="Fine-tuning epochs (default: 1)")
+    pretrain_parser.add_argument("--resume", type=str, default=None,
+                                 help="Resume from results JSON")
+    pretrain_parser.add_argument("--n-hutchinson", type=int, default=50,
+                                 help="Hutchinson samples for trace estimation")
+
+    # Pretrain analysis
+    pretrain_analyze_parser = subparsers.add_parser("pretrain-analyze", parents=[common],
+                                                      help="Analyze pretrain probe results")
+    pretrain_analyze_parser.add_argument("--results", type=str,
+                                          default="./results_pretrain/pretrain_probe_results.json",
+                                          help="Path to pretrain probe results JSON")
+
     # Environment check
     env_parser = subparsers.add_parser("env", help="Check environment")
 
@@ -246,6 +270,24 @@ def main():
         run_analysis(args)
     elif args.command == "full":
         run_full_pipeline(args)
+    elif args.command == "pretrain":
+        check_environment()
+        from experiments.pretrain_probe_sweep import run_experiment as run_pretrain
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        run_pretrain(
+            checkpoint_steps=args.steps,
+            seeds=args.seeds,
+            task_name=args.task,
+            batch_size=args.batch_size,
+            num_epochs=args.epochs,
+            device=device,
+            output_dir=args.output_dir,
+            resume_from=args.resume,
+            n_hutchinson_samples=args.n_hutchinson,
+        )
+    elif args.command == "pretrain-analyze":
+        from analysis.pretrain_analysis import analyze_pretrain_results
+        analyze_pretrain_results(args.results, args.figures_dir)
 
 
 if __name__ == "__main__":

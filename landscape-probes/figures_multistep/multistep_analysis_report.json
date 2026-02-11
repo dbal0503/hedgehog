@@ -1,0 +1,341 @@
+{
+  "n_experiments": 80,
+  "correlations_by_step": [
+    {
+      "step": "init",
+      "probe": "gradient_norm",
+      "correlation": 0.09280830125032505,
+      "p_value": 0.4128963039601513,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "init",
+      "probe": "gradient_variance",
+      "correlation": -0.01563618118891346,
+      "p_value": 0.8905079122879713,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "init",
+      "probe": "sam_sharpness",
+      "correlation": 0.08587583082073176,
+      "p_value": 0.4488049816998252,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "init",
+      "probe": "hutchinson_trace",
+      "correlation": -0.03712566651381178,
+      "p_value": 0.743706737338119,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "init",
+      "probe": "top_eigenvalue",
+      "correlation": -0.18206239177278755,
+      "p_value": 0.10602371588877954,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "init",
+      "probe": "loss_at_init",
+      "correlation": 0.011249135604027011,
+      "p_value": 0.921110558409145,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "10",
+      "probe": "gradient_norm",
+      "correlation": -0.18118813192397165,
+      "p_value": 0.10774025199227703,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "10",
+      "probe": "gradient_variance",
+      "correlation": -0.04060021441558511,
+      "p_value": 0.7206639562491032,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "10",
+      "probe": "sam_sharpness",
+      "correlation": -0.1657548903956903,
+      "p_value": 0.1417218638863878,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "10",
+      "probe": "hutchinson_trace",
+      "correlation": 0.13868808078530023,
+      "p_value": 0.21986773096539006,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "10",
+      "probe": "top_eigenvalue",
+      "correlation": -0.12229319350829622,
+      "p_value": 0.2798435820024802,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "10",
+      "probe": "loss_at_init",
+      "correlation": -0.24129099121914022,
+      "p_value": 0.031070116425796615,
+      "significant": true,
+      "n_samples": 80
+    },
+    {
+      "step": "25",
+      "probe": "gradient_norm",
+      "correlation": -0.06465308552083208,
+      "p_value": 0.5688335552198913,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "25",
+      "probe": "gradient_variance",
+      "correlation": 0.08306508339271788,
+      "p_value": 0.4638445542665255,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "25",
+      "probe": "sam_sharpness",
+      "correlation": -0.1291661993492006,
+      "p_value": 0.25349308119881603,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "25",
+      "probe": "hutchinson_trace",
+      "correlation": 0.1630458639572154,
+      "p_value": 0.1484398853594548,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "25",
+      "probe": "top_eigenvalue",
+      "correlation": 0.07483245759267723,
+      "p_value": 0.5094376169424739,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "25",
+      "probe": "loss_at_init",
+      "correlation": -0.20459599673434364,
+      "p_value": 0.06868738041616287,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "50",
+      "probe": "gradient_norm",
+      "correlation": 0.26639932717054626,
+      "p_value": 0.016913455951050246,
+      "significant": true,
+      "n_samples": 80
+    },
+    {
+      "step": "50",
+      "probe": "gradient_variance",
+      "correlation": 0.15257330720588164,
+      "p_value": 0.17666191495132627,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "50",
+      "probe": "sam_sharpness",
+      "correlation": 0.2446332965653106,
+      "p_value": 0.028744329206677976,
+      "significant": true,
+      "n_samples": 80
+    },
+    {
+      "step": "50",
+      "probe": "hutchinson_trace",
+      "correlation": -0.017591080769317636,
+      "p_value": 0.8769198034867706,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "50",
+      "probe": "top_eigenvalue",
+      "correlation": -0.24666213454737193,
+      "p_value": 0.027405564235280053,
+      "significant": true,
+      "n_samples": 80
+    },
+    {
+      "step": "50",
+      "probe": "loss_at_init",
+      "correlation": -0.2529831962371467,
+      "p_value": 0.02356774778828309,
+      "significant": true,
+      "n_samples": 80
+    },
+    {
+      "step": "100",
+      "probe": "gradient_norm",
+      "correlation": 0.30525216089637913,
+      "p_value": 0.00589920473693653,
+      "significant": true,
+      "n_samples": 80
+    },
+    {
+      "step": "100",
+      "probe": "gradient_variance",
+      "correlation": 0.043016056174571396,
+      "p_value": 0.7047863357428126,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "100",
+      "probe": "sam_sharpness",
+      "correlation": 0.3294223058734216,
+      "p_value": 0.0028466289719557805,
+      "significant": true,
+      "n_samples": 80
+    },
+    {
+      "step": "100",
+      "probe": "hutchinson_trace",
+      "correlation": -0.004526771451304405,
+      "p_value": 0.9682114085461835,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "100",
+      "probe": "top_eigenvalue",
+      "correlation": -0.27772798318598685,
+      "p_value": 0.01262209415587696,
+      "significant": true,
+      "n_samples": 80
+    },
+    {
+      "step": "100",
+      "probe": "loss_at_init",
+      "correlation": -0.3153846234195061,
+      "p_value": 0.00437741936953719,
+      "significant": true,
+      "n_samples": 80
+    },
+    {
+      "step": "200",
+      "probe": "gradient_norm",
+      "correlation": 0.14262848287762742,
+      "p_value": 0.206914981280066,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "200",
+      "probe": "gradient_variance",
+      "correlation": 0.08986696795685405,
+      "p_value": 0.4279235264553086,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "200",
+      "probe": "sam_sharpness",
+      "correlation": 0.11375565564158738,
+      "p_value": 0.31503452950278454,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "200",
+      "probe": "hutchinson_trace",
+      "correlation": -0.21726157488825235,
+      "p_value": 0.05288556207067201,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "200",
+      "probe": "top_eigenvalue",
+      "correlation": -0.44438588239450216,
+      "p_value": 3.636738059178679e-05,
+      "significant": true,
+      "n_samples": 80
+    },
+    {
+      "step": "200",
+      "probe": "loss_at_init",
+      "correlation": -0.3929495622250173,
+      "p_value": 0.00031153502563963906,
+      "significant": true,
+      "n_samples": 80
+    },
+    {
+      "step": "400",
+      "probe": "gradient_norm",
+      "correlation": -0.038524466884805625,
+      "p_value": 0.7344016564877072,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "400",
+      "probe": "gradient_variance",
+      "correlation": 0.33319852454523513,
+      "p_value": 0.002526754728309637,
+      "significant": true,
+      "n_samples": 80
+    },
+    {
+      "step": "400",
+      "probe": "sam_sharpness",
+      "correlation": 0.070481596949066,
+      "p_value": 0.5344297243879015,
+      "significant": false,
+      "n_samples": 80
+    },
+    {
+      "step": "400",
+      "probe": "hutchinson_trace",
+      "correlation": -0.5229476491102747,
+      "p_value": 6.477736917135404e-07,
+      "significant": true,
+      "n_samples": 80
+    },
+    {
+      "step": "400",
+      "probe": "top_eigenvalue",
+      "correlation": -0.25748651291409197,
+      "p_value": 0.021121296412915703,
+      "significant": true,
+      "n_samples": 80
+    },
+    {
+      "step": "400",
+      "probe": "loss_at_init",
+      "correlation": -0.5117831765153478,
+      "p_value": 1.2224650494846135e-06,
+      "significant": true,
+      "n_samples": 80
+    }
+  ]
+}

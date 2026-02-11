@@ -572,6 +572,266 @@ def generate_full_report(
     return report
 
 
+def load_multistep_results(results_dir: str) -> pd.DataFrame:
+    """Load only multistep result files."""
+    all_results = []
+    for f in sorted(os.listdir(results_dir)):
+        if f.endswith('_multistep_results.json'):
+            filepath = os.path.join(results_dir, f)
+            df = load_results(filepath)
+            all_results.append(df)
+
+    if not all_results:
+        raise ValueError(f"No multistep results found in {results_dir}")
+
+    return pd.concat(all_results, ignore_index=True)
+
+
+def detect_probe_steps(df: pd.DataFrame) -> List[str]:
+    """Detect step prefixes from column names (e.g. 'init', 'step10', 'step100')."""
+    probe_names = ['gradient_norm', 'gradient_variance', 'sam_sharpness',
+                   'hutchinson_trace', 'top_eigenvalue', 'loss_at_init']
+    prefixes = set()
+    for col in df.columns:
+        for probe in probe_names:
+            if col.endswith(f'_{probe}'):
+                prefix = col[:col.rfind(f'_{probe}')]
+                if prefix:
+                    prefixes.add(prefix)
+    # Sort: init first, then by step number
+    def sort_key(p):
+        if p == 'init':
+            return 0
+        return int(p.replace('step', ''))
+    return sorted(prefixes, key=sort_key)
+
+
+def compute_correlations_by_step(df: pd.DataFrame, prefixes: List[str]) -> pd.DataFrame:
+    """Compute Spearman correlations between probes at each step and val_accuracy."""
+    probe_names = ['gradient_norm', 'gradient_variance', 'sam_sharpness',
+                   'hutchinson_trace', 'top_eigenvalue', 'loss_at_init']
+    rows = []
+    for prefix in prefixes:
+        step_label = prefix if prefix == 'init' else prefix.replace('step', '')
+        for probe in probe_names:
+            col = f'{prefix}_{probe}'
+            if col not in df.columns or 'val_accuracy' not in df.columns:
+                continue
+            valid = ~(df[col].isna() | df['val_accuracy'].isna())
+            if valid.sum() < 3:
+                continue
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                r, p = stats.spearmanr(df.loc[valid, col], df.loc[valid, 'val_accuracy'])
+            rows.append({
+                'step': step_label,
+                'probe': probe,
+                'correlation': r,
+                'p_value': p,
+                'significant': p < 0.05,
+                'n_samples': int(valid.sum()),
+            })
+    return pd.DataFrame(rows)
+
+
+def plot_correlation_evolution(corr_df: pd.DataFrame, output_dir: str = "./figures"):
+    """Plot how probe-accuracy correlation evolves across training steps."""
+    if not HAS_PLOTTING:
+        print("Plotting libraries not available")
+        return
+
+    probe_names = corr_df['probe'].unique()
+    steps = corr_df['step'].unique()
+
+    # Convert step labels to numeric for x-axis
+    step_nums = []
+    for s in steps:
+        step_nums.append(0 if s == 'init' else int(s))
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    for probe in probe_names:
+        pdf = corr_df[corr_df['probe'] == probe].set_index('step')
+        y = [pdf.loc[s, 'correlation'] if s in pdf.index else np.nan for s in steps]
+        sig = [pdf.loc[s, 'significant'] if s in pdf.index else False for s in steps]
+        ax.plot(step_nums, y, 'o-', label=probe, markersize=6)
+        # Mark significant points
+        for xi, yi, si in zip(step_nums, y, sig):
+            if si:
+                ax.plot(xi, yi, 'o', color='red', markersize=10, zorder=5, fillstyle='none', linewidth=2)
+
+    ax.axhline(y=0, color='gray', linestyle='--', alpha=0.5)
+    ax.set_xlabel('Training Step')
+    ax.set_ylabel('Spearman Correlation with Val Accuracy')
+    ax.set_title('Probe-Accuracy Correlation vs Training Step\n(red circles = p < 0.05)')
+    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+    ax.set_xticks(step_nums)
+    ax.set_xticklabels([str(s) for s in steps], rotation=45)
+
+    plt.tight_layout()
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, "correlation_evolution.png")
+    plt.savefig(output_path, dpi=150, bbox_inches='tight')
+    print(f"Saved correlation evolution plot to {output_path}")
+    plt.close()
+
+
+def generate_multistep_report(
+    results_dir: str = "./results",
+    output_dir: str = "./figures",
+) -> Dict[str, Any]:
+    """Generate analysis report for multistep probe results."""
+    print("=" * 60)
+    print("MULTISTEP LANDSCAPE PROBE ANALYSIS REPORT")
+    print("=" * 60)
+
+    df = load_multistep_results(results_dir)
+    print(f"\nLoaded {len(df)} multistep experiment runs")
+
+    if 'task' in df.columns:
+        print(f"Tasks: {df['task'].unique().tolist()}")
+    if 'probe_steps' in df.columns:
+        print(f"Probe steps: {df['probe_steps'].iloc[0]}")
+
+    prefixes = detect_probe_steps(df)
+    print(f"Detected step prefixes: {prefixes}")
+
+    report = {'n_experiments': len(df)}
+
+    # 1. Correlations by step
+    print("\n" + "-" * 60)
+    print("1. PROBE-ACCURACY CORRELATIONS BY TRAINING STEP (Spearman)")
+    print("-" * 60)
+
+    corr_df = compute_correlations_by_step(df, prefixes)
+    report['correlations_by_step'] = corr_df.to_dict('records')
+
+    # Pivot table for display
+    probe_names = ['gradient_norm', 'gradient_variance', 'sam_sharpness',
+                   'hutchinson_trace', 'top_eigenvalue', 'loss_at_init']
+    steps = [p if p == 'init' else p.replace('step', '') for p in prefixes]
+
+    print(f"\n{'probe':<22}", end="")
+    for s in steps:
+        print(f"{'step ' + s:>12}" if s != 'init' else f"{'init':>12}", end="")
+    print()
+    print("-" * (22 + 12 * len(steps)))
+
+    for probe in probe_names:
+        pdf = corr_df[corr_df['probe'] == probe]
+        print(f"{probe:<22}", end="")
+        for s in steps:
+            row = pdf[pdf['step'] == s]
+            if len(row) == 0:
+                print(f"{'--':>12}", end="")
+            else:
+                r = row.iloc[0]['correlation']
+                sig = row.iloc[0]['significant']
+                marker = "**" if row.iloc[0]['p_value'] < 0.01 else "*" if sig else ""
+                print(f"{r:>9.3f}{marker:<3}", end="")
+        print()
+
+    # 2. Highlight best step per probe
+    print("\n" + "-" * 60)
+    print("2. STRONGEST CORRELATION PER PROBE")
+    print("-" * 60)
+
+    for probe in probe_names:
+        pdf = corr_df[corr_df['probe'] == probe]
+        if len(pdf) == 0:
+            continue
+        best_idx = pdf['correlation'].abs().idxmax()
+        best = pdf.loc[best_idx]
+        sig = "*" if best['significant'] else ""
+        print(f"  {probe:<22} best at step {best['step']:>4}: r={best['correlation']:.3f}{sig} (p={best['p_value']:.4f})")
+
+    # 3. Predictive power at each step
+    print("\n" + "-" * 60)
+    print("3. MANN-WHITNEY PREDICTIVE POWER BY STEP (good vs bad configs)")
+    print("-" * 60)
+
+    max_acc = df['val_accuracy'].max()
+    threshold = max_acc * 0.95
+    df_copy = df.copy()
+    df_copy['is_good'] = df_copy['val_accuracy'] >= threshold
+    n_good = df_copy['is_good'].sum()
+    n_bad = (~df_copy['is_good']).sum()
+    print(f"  Good configs (>= {threshold:.4f}): {n_good}, Bad: {n_bad}")
+
+    for prefix in prefixes:
+        step_label = prefix if prefix == 'init' else prefix.replace('step', '')
+        sig_probes = []
+        for probe in ['gradient_norm', 'gradient_variance', 'sam_sharpness',
+                       'hutchinson_trace', 'top_eigenvalue']:
+            col = f'{prefix}_{probe}'
+            if col not in df_copy.columns:
+                continue
+            good_vals = df_copy.loc[df_copy['is_good'], col].dropna()
+            bad_vals = df_copy.loc[~df_copy['is_good'], col].dropna()
+            if len(good_vals) < 2 or len(bad_vals) < 2:
+                continue
+            stat, p = stats.mannwhitneyu(good_vals, bad_vals, alternative='two-sided')
+            if p < 0.05:
+                n1, n2 = len(good_vals), len(bad_vals)
+                effect = 1 - (2 * stat) / (n1 * n2)
+                sig_probes.append(f"{probe}(p={p:.3f}, d={effect:.2f})")
+
+        step_display = f"step {step_label}" if step_label != 'init' else 'init'
+        if sig_probes:
+            print(f"  {step_display:>10}: {', '.join(sig_probes)}")
+        else:
+            print(f"  {step_display:>10}: no significant probes")
+
+    # 4. Plot
+    print("\n" + "-" * 60)
+    print("4. GENERATING PLOTS")
+    print("-" * 60)
+
+    if HAS_PLOTTING:
+        plot_correlation_evolution(corr_df, output_dir)
+    else:
+        print("Plotting libraries not available")
+
+    # 5. Summary
+    print("\n" + "=" * 60)
+    print("SUMMARY")
+    print("=" * 60)
+
+    max_corr = corr_df['correlation'].abs().max() if len(corr_df) > 0 else 0
+    n_sig = corr_df['significant'].sum() if len(corr_df) > 0 else 0
+    best_row = corr_df.loc[corr_df['correlation'].abs().idxmax()] if len(corr_df) > 0 else None
+
+    print(f"\nMax |correlation|: {max_corr:.3f}")
+    print(f"Significant correlations: {n_sig} / {len(corr_df)}")
+    if best_row is not None:
+        print(f"Best: {best_row['probe']} at step {best_row['step']} "
+              f"(r={best_row['correlation']:.3f}, p={best_row['p_value']:.4f})")
+
+    # Save report
+    report_path = os.path.join(output_dir, "multistep_analysis_report.json")
+    os.makedirs(output_dir, exist_ok=True)
+
+    def convert_numpy(obj):
+        if isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, dict):
+            return {k: convert_numpy(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [convert_numpy(v) for v in obj]
+        return obj
+
+    report = convert_numpy(report)
+    with open(report_path, "w") as f:
+        json.dump(report, f, indent=2)
+    print(f"\nFull report saved to {report_path}")
+
+    return report
+
+
 def main():
     parser = argparse.ArgumentParser(description="Analyze landscape probe experiments")
     parser.add_argument("--results-dir", type=str, default="./results",
@@ -580,14 +840,22 @@ def main():
                         help="Directory for output plots and reports")
     parser.add_argument("--tasks", type=str, nargs="+", default=None,
                         help="Specific tasks to analyze (default: all)")
+    parser.add_argument("--multistep", action="store_true",
+                        help="Analyze multistep probe results (step{N}_ prefixed fields)")
 
     args = parser.parse_args()
 
-    generate_full_report(
-        results_dir=args.results_dir,
-        output_dir=args.output_dir,
-        tasks=args.tasks
-    )
+    if args.multistep:
+        generate_multistep_report(
+            results_dir=args.results_dir,
+            output_dir=args.output_dir,
+        )
+    else:
+        generate_full_report(
+            results_dir=args.results_dir,
+            output_dir=args.output_dir,
+            tasks=args.tasks
+        )
 
 
 if __name__ == "__main__":
